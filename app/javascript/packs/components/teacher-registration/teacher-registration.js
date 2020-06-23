@@ -284,7 +284,7 @@ class TeacherRegistration extends Component {
                 
 
 
-                axios.post('http://localhost:3000/api/v1/teachers',
+                axios.post('/api/v1/teachers',
                     formData,
                     {
                         headers: {

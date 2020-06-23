@@ -196,7 +196,7 @@ class StudentRegistration extends Component {
 
                 /*formData.append('picturePath', this.state.picturePath);*/
 
-                axios.post('http://localhost:3000/api/v1/students',
+                axios.post('/api/v1/students',
                     formData,
                     {
                         headers: {
