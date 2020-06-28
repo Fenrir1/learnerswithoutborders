@@ -19,6 +19,19 @@
     padding-top: 1rem;
 }
 
+.main-header-auth.link .role {
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+}
+
+.main-header-auth.link a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+}
+
 .shop-header {
     border-bottom: 1px solid #e5e5e5;
     margin-bottom: 1rem;

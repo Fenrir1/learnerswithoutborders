@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  documentname: MyString
+  document: MyString
+  path: MyString
+  user: one
+  user_type: User
+
+two:
+  documentname: MyString
+  document: MyString
+  path: MyString
+  user: two
+  user_type: User

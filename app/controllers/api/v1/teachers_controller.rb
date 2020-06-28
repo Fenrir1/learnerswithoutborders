@@ -33,33 +33,6 @@ module Api
             new_file_name_full = nil
           end
 
-
-          if(params.has_key?(:documents))
-              #docs = JSON.parse(params[:documents])
-              docs = params[:documents]
-              documents_json = ''
-
-              docs.each do |doc|
-                uploaded_io = doc.value
-                new_file_name = uploaded_io.original_filename
-                new_file_name_full = 'public/uploads/'+folder_name+'/'+new_file_name
-                dir = File.dirname("#{Rails.root}/public/uploads/#{folder_name}/#{new_file_name}")
-                FileUtils.mkdir_p(dir) unless File.directory?(dir)
-
-                File.open(Rails.root.join('public', 'uploads', folder_name, new_file_name), 'wb') do |file|
-                  file.write(uploaded_io.read)
-                end
-
-                documents_json = documents_json+'{"name": "'+doc.name+'", "path": "'+new_file_name_full+'"}'
-
-              end
-
-              documents_json = '{"documents": "['+documents_json+']"}'
-
-          else
-            documents_json = nil
-          end
-
           #student = Student.new(student_params)
           new_params = teacher_params.except(:picture, :documents)
           #new_params.merge(pictureath: 'public/uploads/'+uploaded_io.original_filename)
@@ -70,9 +43,9 @@ module Api
           )
 
           if student.save
-            render json: {status: 'SUCCESS', message:'Saved student', data:student},status: :ok
+            render json: {status: 'SUCCESS', message:'Saved teacher', data:student},status: :ok
           else
-            render json: {status: 'ERROR', message:'student not saved', data:student.errors},status: :unprocessable_entity
+            render json: {status: 'ERROR', message:'teacher not saved', data:student.errors},status: :unprocessable_entity
           end
         end
   
@@ -85,9 +58,9 @@ module Api
         def update
           teacher = Teacher.find(params[:id])
           if teacher.update_attributes(teacher_params)
-            render json: {status: 'SUCCESS', message:'Updated student', data:teacher},status: :ok
+            render json: {status: 'SUCCESS', message:'Updated teacher', data:teacher},status: :ok
           else
-            render json: {status: 'ERROR', message:'Article not student', data:teacher.errors},status: :unprocessable_entity
+            render json: {status: 'ERROR', message:'Something whent wrong', data:teacher.errors},status: :unprocessable_entity
           end
         end
   
@@ -109,7 +82,9 @@ module Api
                           :phone,
                           :address,
                           :city,
-                          :country
+                          :country,
+
+                          :nameToUseInClass, :backupPersonName, :backupPersonEmail, :backupPersonPhone, :backupPersonAddress, :backupPersonCountry, :backupPersonCity, :id
                                                   
                           )
           #permit(:email :password :pictureath :firstname :middlename :lastname :birthdate)

@@ -61,7 +61,7 @@ const FormContacts = ({ outerContacts, updateContacts}) => {
         <div className="form-group mr-2">
             <label htmlFor="exampleFormControlSelect2" className="mr-2" >Выберите тип связи</label>
             <select className="form-control" 
-                value="WhatsApp"
+                defaultValue="WhatsApp"
                 onChange={(e) => handleContactName(e.target.value) } 
             >
                 <option value="WhatsApp">WhatsApp</option>
@@ -286,7 +286,7 @@ class StudentRegistration extends Component {
 
                     <div className="form-group mt-5 mb-5" >
                         <label className="mr-4" >Дата рождения</label>                        
-                        <DatePicker selected={this.state.birthDate} onChange={date => this.setBirthDate(date)} />
+                        <DatePicker dateFormat="dd/MM/yyyy" selected={this.state.birthDate} onChange={date => this.setBirthDate(date)} />
                     </div>
                     
 

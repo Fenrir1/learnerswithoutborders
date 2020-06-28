@@ -33,10 +33,8 @@ module Api
               new_file_name_full = nil
             end
 
-          #student = Student.new(student_params)
+
           new_params = student_params.except(:picture)
-          #new_params.merge(pictureath: 'public/uploads/'+uploaded_io.original_filename)
-          #student = Student.new(new_params) 
           student = Student.new(
             new_params.merge(picturepath: new_file_name_full)
           )
@@ -66,8 +64,6 @@ module Api
         private
   
         def student_params
-          #params.permit!
-          #params.require(:data)
           params.permit(:email, 
                           :password, 
                           :picture,
@@ -83,7 +79,6 @@ module Api
                           :contacts                      
                           
                           )
-          #permit(:email :password :pictureath :firstname :middlename :lastname :birthdate)
         end
       end
     end

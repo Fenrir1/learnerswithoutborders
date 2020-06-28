@@ -1,7 +1,8 @@
 import React, { Component} from 'react'
-/*import {Link} from 'react-router-dom';*/
 import axios from 'axios';
 import { withRouter } from "react-router";
+import { Link } from 'react-router-dom'
+import { apiURL } from '../../config';
 
 import { connect } from 'react-redux';
 import { teacherLoggedIn, studentLoggedIn } from '../../actions';
@@ -34,7 +35,7 @@ class MainHeader extends Component {
 
     render() {        
 
-        const { logged_in, user } = this.props;
+        const { logged_in, role, user } = this.props;
 
         const handleSubmit = (event) => {
             event.preventDefault();
@@ -44,7 +45,7 @@ class MainHeader extends Component {
                 password: this.state.password
                 }
                 
-            axios.post('/login', {user}/*, {withCredentials: true}*/)
+            axios.post(`${apiURL}/login`, {user}/*, {withCredentials: true}*/)
                 .then(response => {
                 if (response.data.logged_in) {
                     /*this.props.usersService.handleLogin(response.data);*/
@@ -80,14 +81,17 @@ class MainHeader extends Component {
         return (
             
             <header className="main-header">
+
                 <div className="logo" onClick={()=>{this.props.history.push('/')}}>Learners without borders</div> 
 
-
-                {logged_in ? <div>{user.email}</div>:
+                {logged_in ? <div className="main-header-auth link mt-3 mr-2" >
+        { (role==="student") && <Link to='/student'><span className="role">Ученик:</span> {user.email}</Link>  }                  
+                     { (role==="teacher") && <Link to='/teacher'><span className="role">Учитель:</span> {user.email}</Link>  }  
+                </div>:
                 <div>                    
-                        <form onSubmit={handleSubmit}>
+                        <form onSubmit={handleSubmit} className="form-inline mt-3 mr-2">
                             <select
-                                className="mr-2"
+                                className="form-control mr-2"
                                 placeholder="role"
                                 name="role"                 
                                 onChange={this.handleUserInput}
@@ -96,7 +100,7 @@ class MainHeader extends Component {
                                 <option value="teacher">Учитель</option>
                             </select>
                             <input
-                                className="mr-2"
+                                className="form-control mr-2"
                                 placeholder="email"
                                 type="text"
                                 name="email"
@@ -104,14 +108,14 @@ class MainHeader extends Component {
                                 onChange={this.handleUserInput }
                             />
                             <input
-                                className="mr-2"
+                                className="form-control mr-2"
                                 placeholder="password"
                                 type="password"
                                 name="password"
                                 value={this.state.password}
                                 onChange={this.handleUserInput }
-                            />
-                            <button placeholder="submit" type="submit">
+                            />                            
+                            <button type="submit" className="btn btn-primary">
                                 Log In
                             </button>
                         </form>
@@ -127,8 +131,8 @@ class MainHeader extends Component {
 
 /*export default  withUsersService(MainHeader);*/
 
-const mapStateToProps = ({ logged_in, user}) => {
-    return { logged_in, user};
+const mapStateToProps = ({ logged_in, role, user}) => {
+    return { logged_in, role, user};
 }
 
 const mapDispatchToProps = {

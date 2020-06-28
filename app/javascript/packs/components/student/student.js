@@ -1,7 +1,8 @@
 import React, { Component, useState } from 'react';
-import DatePicker from "react-datepicker";
+
 import axios from 'axios';
 import { withRouter } from "react-router";
+import { apiURL } from '../../config';
 
 import { connect } from 'react-redux';
 import { studentLoggedIn  } from '../../actions';
@@ -10,136 +11,36 @@ import { compose } from '../../utils';
 import './student.css';
 import "react-datepicker/dist/react-datepicker.css";
 
+const FormDocuments = ({ documents, user, logginHandler }) => {
 
-const FormErrors = ({formErrors}) => {
-  return (<div className='formErrors'>
-    {Object.keys(formErrors).map((fieldName, i) => {
-      if(formErrors[fieldName].length > 0){
-        return (
-          <p key={i}>{fieldName} {formErrors[fieldName]}</p>
-        )        
-      } else {
-        return '';
-      }
-    })}
-  </div> );  
-};
+    const [documentsList, updateDocumentsList] = useState(documents);
+    const [documentName, handleDocumentName] = useState('');
+    const [documentFileName, handleDocumentFileName] = useState('');
+    const [documentFile, handledDocumentFile] = useState(null);
 
-class Student extends Component {
-    state = {
-        email: '',
-        password: '',
-        picture: null,
-        picturePath: '',
-        firstName: '',
-        middleName: '',
-        lastName: '',
-        birthDate: null,
-        firstNameOfParent: '',
-        lastNameOfParent: '',
-        emailOfParents: '',
-        contacts: [],
 
-        formErrors: {email: '', password: ''},
-        emailValid: false,
-        passwordValid: false,
-        formValid: false
-      }
-
-    handleUserInput = async (e) => {
-        const name = e.target.name;
-        const value = e.target.value;
-        this.setState({[name]: value}, 
-                      () => { this.validateField(name, value) });
-      }
-    
-    validateField(fieldName, value) {
-        let fieldValidationErrors = this.state.formErrors;
-        let emailValid = this.state.emailValid;
-        let passwordValid = this.state.passwordValid;
-        switch(fieldName) {
-            case 'email':
-                emailValid = value.length >= 3;
-                fieldValidationErrors.email = emailValid ? '' : ' не корректный';
-                break;
-            case 'password':
-                passwordValid = value.length >= 6;
-                fieldValidationErrors.password = passwordValid ? '': ' слишком короткий';
-                break;
-            default:
-                break;
-            }
-        this.setState({formErrors: fieldValidationErrors,
-                        emailValid: emailValid,
-                        passwordValid: passwordValid
-                      }, this.validateForm);
-      }
-
-    validateForm() {
-        this.setState({formValid: this.state.emailValid &&
-                                  this.state.passwordValid});
-      }
-
-    errorClass(error) {
-        return(error.length === 0 ? '' : 'has-error');
-     }
-
-    setBirthDate(date) {
-        this.setState({
-            birthDate: date
-        });
+    const deleteDocument = (i) => {
+        
+        axios.delete(`${apiURL}/api/v1/documents/${i}`).then(
+                    (response) => {
+                        console.log('document deleted',response.data.data);
+                        let newDocumentsList = documentsList.filter((document) => document.id !== i);
+                        updateDocumentsList(newDocumentsList);
+                    } 
+                );
+        //handleDocumentsHelper(newDocuments);
     };
 
-    updateContacts(contacts) {
-        this.setState({
-            contacts: contacts
-        });
-    }
+    const addDocument = () => {
+        if (!documentFile) return null;
 
-    onImgChange = (e) => {
-        this.setState({
-            picture: e.target.files[0],
-            picturePath: e.target.files[0].name
-        });
-      };
-    
-    handleSubmit = async (event) => {
-        event.preventDefault();
-        const postVal = {
-            email: this.state.email,
-            password: this.state.password,
-            picture: this.state.picture,
-            picturePath: this.state.picturePath,
-            firstName: this.state.firstName,
-            middleName: this.state.middleName,
-            lastName: this.state.lastName,
-            birthDate: this.state.birthDate,
-            firstNameOfParent: this.state.firstNameOfParent,
-            lastNameOfParent: this.state.lastNameOfParent,
-            emailOfParents: this.state.emailOfParents};
-        
-        /*let data = JSON.stringify({data: postVal});*/
+        const formData = new FormData();
+        if (documentFile) { formData.append('picture', documentFile); }                
+        formData.append('documentname', documentName);
+        formData.append('user_id', user.id);
+        formData.append('user_type', 'Student');
 
-        
-            try {
-
-                const formData = new FormData();
-                if (this.state.picture) { formData.append('picture', this.state.picture); }                
-                formData.append('email', this.state.email);
-                formData.append('password', this.state.password);
-                formData.append('firstname', this.state.firstName);
-                formData.append('middlename', this.state.middleName);
-                formData.append('lastname', this.state.lastName);
-                formData.append('birthdate', this.state.birthDate.valueOf());
-                formData.append('firstNameOfParent', this.state.firstNameOfParent);
-                formData.append('lastNameOfParent', this.state.lastNameOfParent);
-                formData.append('emailOfParents', this.state.emailOfParents);
-                formData.append('contacts', JSON.stringify({contacts: this.state.contacts}) );
-
-
-                /*formData.append('picturePath', this.state.picturePath);*/
-
-                axios.post('http://localhost:3000/api/v1/students',
+        axios.post(`${apiURL}/api/v1/documents`,
                     formData,
                     {
                         headers: {
@@ -148,49 +49,72 @@ class Student extends Component {
                       }                   
                 ).then(
                     (response) => {
-                        console.log('student created',response.data.data);
-                        this.props.studentLoggedIn(response.data.data);
-                        this.props.history.push('/student');   
-                    }                    
+                        console.log('document created',response.data.data);
+                        let newDocumentsList = [...documentsList]; 
+                        newDocumentsList.push(response.data.data);
+                        updateDocumentsList(newDocumentsList);  
+                    } 
                 );
 
-               /* const res = await axios.post('http://localhost:3000/api/v1/students',  {data: postVal} ,
-                {headers: {'Content-Type': 'application/json' }}
-                );*/
-                
-                /*axios.post('http://localhost:3000/api/v1/students', {data: postVal} , {
-                  headers: {
-                    'Content-Type': 'multipart/application/json'
-                  }                  
-                });*/
-          
-                /*const { fileName, filePath } = res.data;*/
-          
-                /*setUploadedFile({ fileName, filePath });*/
-          
-                console.log(postVal);
-            } catch (err) {
-                if (err.response.status === 500) {
-                    console.log('There was a problem with the server');
-                } else {
-                    console.log(err.response.data.msg);
-                }
-              }
+       /* const newDocuments = [ ...documents, {name: documentName, value: documentFile} ];
+        handleDocumentsHelper(newDocuments);*/
+    };
 
-        /*console.log(postVal);*/
+    const onImgChange = (e) => {
+        handledDocumentFile(e.target.files[0]);
+        handleDocumentFileName(e.target.files[0].name);
       }
+
+
+    return (<div className='formContacts'><div>
+      {documentsList.map((document, i) => {
+         return (
+            <p key={i}>{document.documentname} <span className="badge badge-danger" onClick={() => deleteDocument(document.id)} >X</span></p>
+          )     
+      })}
+        </div>
+        <div className='form-inline'>
+        <div className="form-group mr-2">
+            <label className="mr-2" >Описание документа</label>
+            <input type="text" className="form-control" value={documentName} onChange={(e) => handleDocumentName(e.target.value) } />
+        </div>
+        <div className="form-group mr-2">
+            <div className='custom-file'>                        
+                <input
+                    type='file'
+                    className='custom-file-input'
+                    id='customDocument'
+                    onChange={onImgChange}
+                />
+                <label className='custom-file-label' htmlFor='customDocument'>{documentFileName}</label>
+            </div>
+        </div>
+                   
+            <button type="button" className="btn btn-primary"  onClick={addDocument}>Добавить</button>
+        
+
+    </div>
+    </div> );  
+  };
+
+
+
+class Student extends Component {
 
     render() {
         if (this.props.user) {
+
             const { email,
-            picturepath,
-            firstname,
-            middlename,
-            lastname,
-            birthdate
+                    picturepath,
+                    firstname,
+                    middlename,
+                    lastname,
+                    birthdate,
+                    document
             } = this.props.user;
 
             let picturepathActual = picturepath.replace("public", "..");
+            let birthdateActual = new Date(Number(birthdate));
 
             return (
                 <div className="student">
@@ -201,10 +125,16 @@ class Student extends Component {
                         </div>
                         <div className="col-8">
                             <h2>{firstname} {middlename} {lastname}</h2>
-                            <p>{birthdate}</p>
+                            <p>{birthdateActual.toLocaleDateString()}</p>
                             <p>{email}</p>
                         </div>
-                    </div>                                        
+                    </div> 
+                    <div className="row">
+                        <h2>Загрузка необходимых документов</h2>
+                        <div className="alert alert-secondary col-12" role="alert">...здесь можно вывести список документов для загузки</div>
+                        
+                        <FormDocuments documents={document} logginHandler={this.props.studentLoggedIn} user={this.props.user} />
+                    </div>                                       
                 </div>
             )            
         } else {       

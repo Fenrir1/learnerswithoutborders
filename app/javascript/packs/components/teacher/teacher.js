@@ -1,44 +1,114 @@
 import React, { Component, useState } from 'react';
-import DatePicker from "react-datepicker";
+
 import axios from 'axios';
 import { withRouter } from "react-router";
+import { apiURL } from '../../config';
 
 import { connect } from 'react-redux';
-import { studentLoggedIn  } from '../../actions';
+import { teacherLoggedIn  } from '../../actions';
 import { compose } from '../../utils';
 
 import './teacher.css';
 import "react-datepicker/dist/react-datepicker.css";
 
+const FormDocuments = ({ documents, user, logginHandler }) => {
 
-const FormErrors = ({formErrors}) => {
-  return (<div className='formErrors'>
-    {Object.keys(formErrors).map((fieldName, i) => {
-      if(formErrors[fieldName].length > 0){
-        return (
-          <p key={i}>{fieldName} {formErrors[fieldName]}</p>
-        )        
-      } else {
-        return '';
+    const [documentsList, updateDocumentsList] = useState(documents);
+    const [documentName, handleDocumentName] = useState('');
+    const [documentFileName, handleDocumentFileName] = useState('');
+    const [documentFile, handledDocumentFile] = useState(null);
+
+
+    const deleteDocument = (i) => {
+        
+        axios.delete(`${apiURL}/api/v1/documents/${i}`).then(
+                    (response) => {
+                        console.log('document deleted',response.data.data);
+                        let newDocumentsList = documentsList.filter((document) => document.id !== i);
+                        updateDocumentsList(newDocumentsList);
+                    } 
+                );
+        //handleDocumentsHelper(newDocuments);
+    };
+
+    const addDocument = () => {
+        console.log("add doc starrt");
+        if (!documentFile) return null;
+
+        const formData = new FormData();
+        if (documentFile) { formData.append('picture', documentFile); }                
+        formData.append('documentname', documentName);
+        formData.append('user_id', user.id);
+        formData.append('user_type', 'Teacher');
+
+        axios.post(`${apiURL}/api/v1/documents`,
+                    formData,
+                    {
+                        headers: {
+                          'Content-Type': 'multipart/form-data'
+                        }                  
+                      }                   
+                ).then(
+                    (response) => {
+                        console.log('document created',response.data.data);
+                        let newDocumentsList = [...documentsList]; 
+                        newDocumentsList.push(response.data.data);
+                        updateDocumentsList(newDocumentsList);  
+                    } 
+                );
+
+       /* const newDocuments = [ ...documents, {name: documentName, value: documentFile} ];
+        handleDocumentsHelper(newDocuments);*/
+    };
+
+    const onImgChange = (e) => {
+        handledDocumentFile(e.target.files[0]);
+        handleDocumentFileName(e.target.files[0].name);
       }
-    })}
-  </div> );  
-};
+
+
+    return (<div className='formContacts'><div>
+      {documentsList.map((document, i) => {
+         return (
+            <p key={i}>{document.documentname} <span className="badge badge-danger" onClick={() => deleteDocument(document.id)} >X</span></p>
+          )     
+      })}
+        </div>
+        <div className='form-inline'>
+        <div className="form-group mr-2">
+            <label className="mr-2" >Описание документа</label>
+            <input type="text" className="form-control" value={documentName} onChange={(e) => handleDocumentName(e.target.value) } />
+        </div>
+        <div className="form-group mr-2">
+            <div className='custom-file'>                        
+                <input
+                    type='file'
+                    className='custom-file-input'
+                    id='customDocument'
+                    onChange={onImgChange}
+                />
+                <label className='custom-file-label' htmlFor='customDocument'>{documentFileName}</label>
+            </div>
+        </div>
+                   
+            <button type="button" className="btn btn-primary"  onClick={addDocument}>Добавить</button>
+        
+
+    </div>
+    </div> );  
+  };
+
 
 class Teacher extends Component {
+
     state = {
-        email: '',
-        password: '',
-        picture: null,
-        picturePath: '',
-        firstName: '',
-        middleName: '',
-        lastName: '',
-        birthDate: null,
-        firstNameOfParent: '',
-        lastNameOfParent: '',
-        emailOfParents: '',
-        contacts: [],
+        nameToUseInClass: '',
+        backupPersonName: '',
+        backupPersonEmail: '',
+        backupPersonPhone: '',
+        backupPersonAddress: '',
+        backupPersonCountry: '',
+        backupPersonCity: '',
 
         formErrors: {email: '', password: ''},
         emailValid: false,
@@ -49,32 +119,9 @@ class Teacher extends Component {
     handleUserInput = async (e) => {
         const name = e.target.name;
         const value = e.target.value;
-        this.setState({[name]: value}, 
-                      () => { this.validateField(name, value) });
+        this.setState({[name]: value});
       }
     
-    validateField(fieldName, value) {
-        let fieldValidationErrors = this.state.formErrors;
-        let emailValid = this.state.emailValid;
-        let passwordValid = this.state.passwordValid;
-        switch(fieldName) {
-            case 'email':
-                emailValid = value.length >= 3;
-                fieldValidationErrors.email = emailValid ? '' : ' не корректный';
-                break;
-            case 'password':
-                passwordValid = value.length >= 6;
-                fieldValidationErrors.password = passwordValid ? '': ' слишком короткий';
-                break;
-            default:
-                break;
-            }
-        this.setState({formErrors: fieldValidationErrors,
-                        emailValid: emailValid,
-                        passwordValid: passwordValid
-                      }, this.validateForm);
-      }
-
     validateForm() {
         this.setState({formValid: this.state.emailValid &&
                                   this.state.passwordValid});
@@ -84,62 +131,42 @@ class Teacher extends Component {
         return(error.length === 0 ? '' : 'has-error');
      }
 
-    setBirthDate(date) {
-        this.setState({
-            birthDate: date
-        });
-    };
-
-    updateContacts(contacts) {
-        this.setState({
-            contacts: contacts
-        });
+    updateUserInfo = (id) => {
+        axios.post(`${apiURL}/api/v1/teachers/${id}`).then(
+                (response) => {
+                    console.log('Teacher loaded',response.data.data);
+                    this.props.teacherLoggedIn(response.data.data);
+                }                    
+            );
     }
 
-    onImgChange = (e) => {
-        this.setState({
-            picture: e.target.files[0],
-            picturePath: e.target.files[0].name
-        });
-      };
-    
+   
     handleSubmit = async (event) => {
         event.preventDefault();
-        const postVal = {
-            email: this.state.email,
-            password: this.state.password,
-            picture: this.state.picture,
-            picturePath: this.state.picturePath,
-            firstName: this.state.firstName,
-            middleName: this.state.middleName,
-            lastName: this.state.lastName,
-            birthDate: this.state.birthDate,
-            firstNameOfParent: this.state.firstNameOfParent,
-            lastNameOfParent: this.state.lastNameOfParent,
-            emailOfParents: this.state.emailOfParents};
-        
-        /*let data = JSON.stringify({data: postVal});*/
 
-        
+        /*
+                nameToUseInClass: '',
+        backupPersonName: '',
+        backupPersonEmail: '',
+        backupPersonPhone: '',
+        backupPersonAddress: '',
+        backupPersonCountry: '',
+        backupPersonCity: '',
+        */
+       
             try {
 
-                const formData = new FormData();
-                if (this.state.picture) { formData.append('picture', this.state.picture); }                
-                formData.append('email', this.state.email);
-                formData.append('password', this.state.password);
-                formData.append('firstname', this.state.firstName);
-                formData.append('middlename', this.state.middleName);
-                formData.append('lastname', this.state.lastName);
-                formData.append('birthdate', this.state.birthDate.valueOf());
-                formData.append('firstNameOfParent', this.state.firstNameOfParent);
-                formData.append('lastNameOfParent', this.state.lastNameOfParent);
-                formData.append('emailOfParents', this.state.emailOfParents);
-                formData.append('contacts', JSON.stringify({contacts: this.state.contacts}) );
+                const formData = new FormData();             
+                formData.append('nameToUseInClass', this.state.nameToUseInClass);
+                formData.append('backupPersonName', this.state.backupPersonName);
+                formData.append('backupPersonEmail', this.state.backupPersonEmail);
+                formData.append('backupPersonPhone', this.state.backupPersonPhone);
+                formData.append('backupPersonAddress', this.state.backupPersonAddress);
+                formData.append('backupPersonCountry', this.state.backupPersonCountry);
+                formData.append('backupPersonCity', this.state.backupPersonCity);
 
 
-                /*formData.append('picturePath', this.state.picturePath);*/
-
-                axios.post('http://localhost:3000/api/v1/students',
+                axios.patch(`${apiURL}/api/v1/teachers/${this.props.user.id}`,
                     formData,
                     {
                         headers: {
@@ -148,27 +175,11 @@ class Teacher extends Component {
                       }                   
                 ).then(
                     (response) => {
-                        console.log('student created',response.data.data);
-                        this.props.studentLoggedIn(response.data.data);
-                        this.props.history.push('/student');   
+                        console.log('Teacher updated',response.data.data);
+                        this.props.teacherLoggedIn(response.data.data);                         
                     }                    
                 );
 
-               /* const res = await axios.post('http://localhost:3000/api/v1/students',  {data: postVal} ,
-                {headers: {'Content-Type': 'application/json' }}
-                );*/
-                
-                /*axios.post('http://localhost:3000/api/v1/students', {data: postVal} , {
-                  headers: {
-                    'Content-Type': 'multipart/application/json'
-                  }                  
-                });*/
-          
-                /*const { fileName, filePath } = res.data;*/
-          
-                /*setUploadedFile({ fileName, filePath });*/
-          
-                console.log(postVal);
             } catch (err) {
                 if (err.response.status === 500) {
                     console.log('There was a problem with the server');
@@ -177,23 +188,35 @@ class Teacher extends Component {
                 }
               }
 
-        /*console.log(postVal);*/
       }
 
     render() {
         if (this.props.user) {
-            const { email,
-            picturepath,
-            firstname,
-            middlename,
-            lastname,
-            birthdate
+
+            const { 
+                picturepath,
+                firstname,
+                middlename,
+                lastname,
+                birthdate,
+                email,
+                nameToUseInClass,
+                backupPersonName,
+                backupPersonEmail,
+                backupPersonPhone,
+                backupPersonAddress,
+                backupPersonCountry,
+                backupPersonCity,
+                document
             } = this.props.user;
 
             let picturepathActual = picturepath.replace("public", "..");
 
+            let birthdateActual = new Date(Number(birthdate));
+            //let birthdateActual = new Intl.DateTimeFormat('en-GB').format(tmpDate);
+
             return (
-                <div className="student">
+                <div className="teacher">
                     <h2>Личный кабинет учителя</h2>
                     <div className="row">
                         <div className="col-4">
@@ -201,10 +224,56 @@ class Teacher extends Component {
                         </div>
                         <div className="col-8">
                             <h2>{firstname} {middlename} {lastname}</h2>
-                            <p>{birthdate}</p>
-                            <p>{email}</p>
+                            <p>{birthdateActual.toLocaleDateString()}</p>
+                            <p>{email}</p>                        
                         </div>
-                    </div>                                        
+                    </div>    
+                    <div className="row">
+                        <h2>Загрузка необходимых документов</h2>
+                        <div className="alert alert-secondary col-12" role="alert">...здесь можно вывести список документов для загузки</div>
+                        
+                        <FormDocuments documents={document} logginHandler={this.props.teacherLoggedIn} user={this.props.user} />
+                    </div>
+                    <div className="row">                        
+                        <form onSubmit={this.handleSubmit}>
+                            <h2>Дополнительная информация</h2>
+                            <div className="form-group" >
+                                <label htmlFor="nameToUseInClass">Имя используемое в классе</label>
+                                <input type="text" className="form-control" name="nameToUseInClass" defaultValue={nameToUseInClass} onChange={this.handleUserInput} />
+                            </div>
+                           
+                            <h2>Информация о заместителе</h2>
+                            <div className="form-group" >
+                                <label htmlFor="backupPersonName">Имя</label>
+                                <input type="text" className="form-control" name="backupPersonName" defaultValue={backupPersonName} onChange={this.handleUserInput} />
+                            </div>
+                            <div className="form-group" >
+                                <label htmlFor="backupPersonEmail">Email</label>
+                                <input type="text" className="form-control" name="backupPersonEmail" defaultValue={backupPersonEmail} onChange={this.handleUserInput} />
+                            </div>
+                            <div className="form-group" >
+                                <label htmlFor="backupPersonPhone">Телефон</label>
+                                <input type="text" className="form-control" name="backupPersonPhone" defaultValue={backupPersonPhone} onChange={this.handleUserInput} />
+                            </div>
+                            <div className="form-group" >
+                                <label htmlFor="backupPersonAddress">Адрес</label>
+                                <input type="text" className="form-control" name="backupPersonAddress" defaultValue={backupPersonAddress} onChange={this.handleUserInput} />
+                            </div>
+                            <div className="form-group" >
+                                <label htmlFor="backupPersonCountry">Страна</label>
+                                <input type="text" className="form-control" name="backupPersonCountry" defaultValue={backupPersonCountry} onChange={this.handleUserInput} />
+                            </div>
+                            <div className="form-group" >
+                                <label htmlFor="backupPersonCity">Город</label>
+                                <input type="text" className="form-control" name="backupPersonCity" defaultValue={backupPersonCity} onChange={this.handleUserInput} />
+                            </div>
+
+                            <button placeholder="submit" type="submit" className="btn btn-primary">
+                                Сохранить
+                            </button>
+                        </form>
+                        
+                    </div>
                 </div>
             )            
         } else {       
@@ -230,7 +299,7 @@ const mapStateToProps = ({ logged_in, user}) => {
 }
 
 const mapDispatchToProps = {
-    studentLoggedIn
+    teacherLoggedIn
 }
 
 export default compose(

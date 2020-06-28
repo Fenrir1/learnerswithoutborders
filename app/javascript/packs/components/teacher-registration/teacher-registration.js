@@ -11,68 +11,6 @@ import './teacher-registration.css';
 import "react-datepicker/dist/react-datepicker.css";
 
 
-const FormDocuments = ({ outerDocuments, updateDocuments}) => {
-    /*const [documents, handleDocuments] = useState(outerDocuments);*/
-    let documents = outerDocuments;
-
-    const [documentName, handleDocumentName] = useState('');
-    const [documentFileName, handleDocumentFileName] = useState('');
-    const [documentFile, handledDocumentFile] = useState(null);
-
-
-    const handleDocumentsHelper = (newDocuments) => {
-        /*handleDocuments(newDocuments);*/
-        if (newDocuments !== documents) { updateDocuments(newDocuments); }        
-    }
-
-    const deleteDocument = (i) => {
-        const newDocuments = [ ...documents.slice(0, i), ...documents.slice(i+1) ];
-        handleDocumentsHelper(newDocuments);
-    };
-
-    const addDocument = () => {
-        if (!documentFile) return null;
-        const newDocuments = [ ...documents, {name: documentName, value: documentFile} ];
-        handleDocumentsHelper(newDocuments);
-    };
-
-    const onImgChange = (e) => {
-        handledDocumentFile(e.target.files[0]);
-        handleDocumentFileName(e.target.files[0].name);
-      }
-
-
-    return (<div className='formContacts'><div>
-      {documents.map((document, i) => {
-         return (
-            <p key={i}>{document.name} <span className="badge badge-danger" onClick={() => deleteDocument(i)} >X</span></p>
-          )     
-      })}
-        </div>
-        <div className='form-inline'>
-        <div class="form-group mr-2">
-            <label className="mr-2" >Описание документа</label>
-            <input type="text" className="form-control" value={documentName} onChange={(e) => handleDocumentName(e.target.value) } />
-        </div>
-        <div class="form-group mr-2">
-            <div className='custom-file'>                        
-                <input
-                    type='file'
-                    className='custom-file-input'
-                    id='customDocument'
-                    onChange={onImgChange}
-                />
-                <label className='custom-file-label' htmlFor='customDocument'>{documentFileName}</label>
-            </div>
-        </div>
-                   
-            <button type="button" class="btn btn-primary"  onClick={addDocument}>Добавить</button>
-        
-
-    </div>
-    </div> );  
-  };
-
 const FormContacts = ({ outerContacts, updateContacts}) => {
     const [contacts, handleContacts] = useState(outerContacts);
 
@@ -362,7 +300,7 @@ class TeacherRegistration extends Component {
 
                     <div className="form-group mt-5 mb-5" >
                         <label className="mr-4" >Дата рождения</label>                        
-                        <DatePicker selected={this.state.birthDate} onChange={date => this.setBirthDate(date)} />
+                        <DatePicker dateFormat="dd/MM/yyyy" selected={this.state.birthDate} onChange={date => this.setBirthDate(date)} />
                     </div>
 
                     <div className="form-group" >
